@@ -16,11 +16,13 @@ return {
     },
   },
   opts = {
+    scroll = { enabled = false },
     picker = {
       sources = {
         explorer = {
           layout = { layout = { position = "right" } },
           hidden = true,
+          ignored = true,
         },
         files = { hidden = true },
       },

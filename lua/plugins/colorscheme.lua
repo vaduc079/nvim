@@ -1,11 +1,27 @@
 return {
-  { "ellisonleao/gruvbox.nvim", lazy = true, enabled = true, opts = { contrast = "hard", transparent_mode = true } },
-  { "jacoborus/tender.vim", lazy = true, enabled = true },
-  { "kepano/flexoki-neovim", lazy = true, enabled = true },
+  {
+    "ellisonleao/gruvbox.nvim",
+    lazy = true,
+    enabled = true,
+    opts = {
+      contrast = "hard",
+      transparent_mode = true,
+      overrides = {
+        -- Diffview uses these groups for added lines depending on mode.
+        DiffAdd = { bg = "#2E3D32" },
+        DiffviewDiffAdd = { bg = "#2E3D32" },
+        DiffChange = { bg = "#2E3D32" },
+        DiffText = { fg = "NONE", bg = "#435e43" },
+        -- DiffviewDiffText = { fg = "NONE" },
+      },
+    },
+  },
+  { "jacoborus/tender.vim", lazy = true, enabled = false },
+  { "kepano/flexoki-neovim", lazy = true, enabled = false },
   {
     "AlexvZyl/nordic.nvim",
     lazy = true,
-    enabled = true,
+    enabled = false,
     opts = {
       transparent = {
         -- Enable transparent background.
@@ -19,11 +35,11 @@ return {
       reduced_blue = true,
     },
   },
-  { "savq/melange-nvim", lazy = true, enabled = true },
+  { "savq/melange-nvim", lazy = true, enabled = false },
   {
     "rebelot/kanagawa.nvim",
     lazy = true,
-    enabled = true,
+    enabled = false,
     opts = {
       transparent = false,
       overrides = function(colors)

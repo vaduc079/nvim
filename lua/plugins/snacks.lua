@@ -69,7 +69,7 @@ return {
           cmd = "git --no-pager diff --stat -B -M -C",
           height = 10,
           padding = 1,
-          ttl = 5 * 60,
+          ttl = 60,
           indent = 3,
         },
         {

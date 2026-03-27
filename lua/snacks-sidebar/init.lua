@@ -218,7 +218,7 @@ end
 function M.explorer_source_opts()
   return {
     focus = "list",
-    layout = { layout = { position = "right" } },
+    layout = { layout = { position = "right" }, auto_hide = { "input" } },
     sidebar_mode = get_sidebar_mode(),
     hidden = true,
     ignored = true,

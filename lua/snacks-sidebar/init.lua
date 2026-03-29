@@ -187,12 +187,38 @@ local function toggle_sidebar_mode(candidate)
   end
 end
 
-function M.list_keys()
+local function move_wezterm(direction)
+  return function()
+    require("wezterm-move").move(direction)
+  end
+end
+
+local movement_key_descriptions = {
+  h = "Go to Left Window",
+  j = "Go to Lower Window",
+  k = "Go to Upper Window",
+  l = "Go to Right Window",
+}
+
+-- Explorer list buffers need local mappings because picker windows can handle
+-- control keys differently from normal editing buffers.
+local function movement_keys()
   return {
+    ["<c-h>"] = { move_wezterm("h"), desc = movement_key_descriptions.h },
+    ["<c-j>"] = { move_wezterm("j"), desc = movement_key_descriptions.j },
+    -- Some terminals send Ctrl-j as <NL> inside picker buffers.
+    ["<nl>"] = { move_wezterm("j"), desc = movement_key_descriptions.j },
+    ["<c-k>"] = { move_wezterm("k"), desc = movement_key_descriptions.k },
+    ["<c-l>"] = { move_wezterm("l"), desc = movement_key_descriptions.l },
+  }
+end
+
+function M.list_keys()
+  return vim.tbl_extend("force", movement_keys(), {
     ["<a-g>"] = function(...)
       toggle_sidebar_mode(select(1, ...))
     end,
-  }
+  })
 end
 
 function M.keymaps()

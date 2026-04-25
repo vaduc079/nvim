@@ -9,7 +9,9 @@ return {
       overrides = {
         -- Diffview uses these groups for added lines depending on mode.
         DiffAdd = { bg = "#2E3D32" },
+        DiffDelete = { bg = "#4A2A2A" },
         DiffviewDiffAdd = { bg = "#2E3D32" },
+        DiffviewDiffDelete = { bg = "#4A2A2A" },
         DiffChange = { bg = "#2E3D32" },
         DiffText = { fg = "NONE", bg = "#435e43" },
         -- DiffviewDiffText = { fg = "NONE" },

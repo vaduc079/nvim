@@ -2,23 +2,23 @@
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
-local function move_wezterm(direction)
-  require("wezterm-move").move(direction)
-end
-
--- Move to window using the <ctrl> hjkl keys
-vim.keymap.set("n", "<C-h>", function()
-  move_wezterm("h")
-end, { desc = "Go to Left Window" })
-
-vim.keymap.set("n", "<C-j>", function()
-  move_wezterm("j")
-end, { desc = "Go to Lower Window" })
-
-vim.keymap.set("n", "<C-k>", function()
-  move_wezterm("k")
-end, { desc = "Go to Upper Window" })
-
-vim.keymap.set("n", "<C-l>", function()
-  move_wezterm("l")
-end, { desc = "Go to Right Window" })
+-- local function move_wezterm(direction)
+--   require("wezterm-move").move(direction)
+-- end
+--
+-- -- Move to window using the <ctrl> hjkl keys
+-- vim.keymap.set("n", "<C-h>", function()
+--   move_wezterm("h")
+-- end, { desc = "Go to Left Window" })
+--
+-- vim.keymap.set("n", "<C-j>", function()
+--   move_wezterm("j")
+-- end, { desc = "Go to Lower Window" })
+--
+-- vim.keymap.set("n", "<C-k>", function()
+--   move_wezterm("k")
+-- end, { desc = "Go to Upper Window" })
+--
+-- vim.keymap.set("n", "<C-l>", function()
+--   move_wezterm("l")
+-- end, { desc = "Go to Right Window" })

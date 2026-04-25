@@ -204,12 +204,12 @@ local movement_key_descriptions = {
 -- control keys differently from normal editing buffers.
 local function movement_keys()
   return {
-    ["<c-h>"] = { move_wezterm("h"), desc = movement_key_descriptions.h },
-    ["<c-j>"] = { move_wezterm("j"), desc = movement_key_descriptions.j },
-    -- Some terminals send Ctrl-j as <NL> inside picker buffers.
-    ["<nl>"] = { move_wezterm("j"), desc = movement_key_descriptions.j },
-    ["<c-k>"] = { move_wezterm("k"), desc = movement_key_descriptions.k },
-    ["<c-l>"] = { move_wezterm("l"), desc = movement_key_descriptions.l },
+    -- ["<c-h>"] = { move_wezterm("h"), desc = movement_key_descriptions.h },
+    -- ["<c-j>"] = { move_wezterm("j"), desc = movement_key_descriptions.j },
+    -- -- Some terminals send Ctrl-j as <NL> inside picker buffers.
+    -- ["<nl>"] = { move_wezterm("j"), desc = movement_key_descriptions.j },
+    -- ["<c-k>"] = { move_wezterm("k"), desc = movement_key_descriptions.k },
+    -- ["<c-l>"] = { move_wezterm("l"), desc = movement_key_descriptions.l },
   }
 end
 

@@ -238,6 +238,19 @@ function M.keymaps()
       end,
       desc = "Snacks Sidebar (tree/git-only mode)",
     },
+    {
+      "<leader>o",
+      function()
+        local sidebar_mode = get_sidebar_mode()
+        local picker = (Snacks.picker.get({ source = "explorer" }) or {})[1]
+        if picker == nil then
+          open_sidebar(sidebar_mode)
+        else
+          picker:close()
+        end
+      end,
+      desc = "Snacks Sidebar Open/Quit",
+    },
   }
 end
 

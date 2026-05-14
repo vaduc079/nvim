@@ -61,7 +61,7 @@ return {
           section = "terminal",
           cmd = "pokemon-colorscripts -r --no-title",
           random = 10,
-          height = 20,
+          height = 30,
           indent = 4,
         },
       },

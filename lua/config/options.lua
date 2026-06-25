@@ -7,3 +7,5 @@ vim.filetype.add({
     [".*/%.config/tmux/.*"] = "tmux",
   },
 })
+
+vim.g.lazyvim_prettier_needs_config = true

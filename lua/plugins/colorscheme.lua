@@ -41,9 +41,9 @@ return {
   {
     "rebelot/kanagawa.nvim",
     lazy = true,
-    enabled = false,
+    enabled = true,
     opts = {
-      transparent = false,
+      transparent = true,
       overrides = function(colors)
         local theme = colors.theme
         return {
@@ -60,6 +60,15 @@ return {
           -- set their background accordingly if you wish to keep them dark and borderless
           LazyNormal = { bg = theme.ui.bg_m3, fg = theme.ui.fg_dim },
           MasonNormal = { bg = theme.ui.bg_m3, fg = theme.ui.fg_dim },
+
+          NoiceCmdlinePopupBorder = {
+            fg = theme.diag.info,
+            bg = "none",
+          },
+          NoiceCmdlinePopupBorderSearch = {
+            fg = theme.diag.warning,
+            bg = "none",
+          },
         }
       end,
     },
@@ -67,7 +76,7 @@ return {
   {
     "LazyVim/LazyVim",
     opts = {
-      colorscheme = "gruvbox",
+      colorscheme = "kanagawa",
     },
   },
 }

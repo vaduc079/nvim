@@ -1,8 +1,8 @@
 local directions = {
-  h = { wincmd = "h", herdr = "left", desc = "Navigate left (vim/herdr)" },
-  j = { wincmd = "j", herdr = "down", desc = "Navigate down (vim/herdr)" },
-  k = { wincmd = "k", herdr = "up", desc = "Navigate up (vim/herdr)" },
-  l = { wincmd = "l", herdr = "right", desc = "Navigate right (vim/herdr)" },
+  h = { wincmd = "h", pane = "left", desc = "Navigate left (vim/pane)" },
+  j = { wincmd = "j", pane = "down", desc = "Navigate down (vim/pane)" },
+  k = { wincmd = "k", pane = "up", desc = "Navigate up (vim/pane)" },
+  l = { wincmd = "l", pane = "right", desc = "Navigate right (vim/pane)" },
 }
 
 local function has_env(name)
@@ -11,6 +11,14 @@ end
 
 local function in_herdr()
   return has_env("HERDR_PANE_ID")
+end
+
+local function in_rex()
+  return has_env("REX_BLOCK")
+end
+
+local function in_pane_multiplexer()
+  return in_herdr() or in_rex()
 end
 
 local function herdr_binary()
@@ -39,6 +47,21 @@ local function focus_herdr_pane(direction)
   return vim.v.shell_error, output
 end
 
+local function focus_rex_pane(direction)
+  local output = vim.fn.system({ "rex", "focus", direction })
+
+  return vim.v.shell_error, output
+end
+
+-- herdr wins when Neovim runs inside herdr inside Rex, since herdr owns the nearer panes.
+local function focus_pane(direction)
+  if in_herdr() then
+    return focus_herdr_pane(direction)
+  end
+
+  return focus_rex_pane(direction)
+end
+
 local function navigate(item)
   local current_window = vim.api.nvim_get_current_win()
 
@@ -49,7 +72,7 @@ local function navigate(item)
     return
   end
 
-  focus_herdr_pane(item.herdr)
+  focus_pane(item.pane)
 end
 
 local function set_keymap(lhs, item)
@@ -76,31 +99,33 @@ local function setup_keymaps_after_lazyvim()
 end
 
 local function setup_commands()
-  vim.api.nvim_create_user_command("HerdrNavigatorDebug", function()
+  vim.api.nvim_create_user_command("PaneNavigatorDebug", function()
     local lines = {
       "HERDR_PANE_ID=" .. tostring(vim.env.HERDR_PANE_ID),
       "HERDR_BIN=" .. tostring(vim.env.HERDR_BIN),
       "HERDR_BIN_PATH=" .. tostring(vim.env.HERDR_BIN_PATH),
+      "REX_BLOCK=" .. tostring(vim.env.REX_BLOCK),
       "herdr_binary=" .. herdr_binary(),
       "in_herdr=" .. tostring(in_herdr()),
+      "in_rex=" .. tostring(in_rex()),
     }
 
     vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
   end, {})
 
-  vim.api.nvim_create_user_command("HerdrNavigateLeft", function()
+  vim.api.nvim_create_user_command("PaneNavigateLeft", function()
     navigate(directions.h)
   end, {})
 
-  vim.api.nvim_create_user_command("HerdrNavigateDown", function()
+  vim.api.nvim_create_user_command("PaneNavigateDown", function()
     navigate(directions.j)
   end, {})
 
-  vim.api.nvim_create_user_command("HerdrNavigateUp", function()
+  vim.api.nvim_create_user_command("PaneNavigateUp", function()
     navigate(directions.k)
   end, {})
 
-  vim.api.nvim_create_user_command("HerdrNavigateRight", function()
+  vim.api.nvim_create_user_command("PaneNavigateRight", function()
     navigate(directions.l)
   end, {})
 end
@@ -109,13 +134,13 @@ return {
   {
     "christoomey/vim-tmux-navigator",
     cond = function()
-      return not in_herdr()
+      return not in_pane_multiplexer()
     end,
   },
   {
     "LazyVim/LazyVim",
     init = function()
-      if not in_herdr() then
+      if not in_pane_multiplexer() then
         return
       end
 

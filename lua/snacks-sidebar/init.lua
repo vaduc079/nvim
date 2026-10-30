@@ -231,7 +231,13 @@ function M.keymaps()
         if picker == nil then
           open_sidebar(sidebar_mode)
         elseif picker:is_focused() == true then
-          picker:close()
+          -- Keep the sidebar open and jump back to the window it tracks as main.
+          local main = picker.main
+          if main and vim.api.nvim_win_is_valid(main) then
+            vim.api.nvim_set_current_win(main)
+          else
+            vim.cmd.wincmd("p")
+          end
         else
           picker:focus("list", { show = true })
         end

@@ -73,8 +73,13 @@ return {
       end,
     },
   },
-  -- Local plugin: a colorscheme that follows the Rex terminal theme; run :RexPalette after changing it.
-  { dir = vim.fn.stdpath("config") .. "/plugins/rex.nvim", name = "rex.nvim", lazy = true },
+  -- Local plugin: a colorscheme that follows the Rex terminal theme.
+  {
+    dir = vim.fn.stdpath("config") .. "/plugins/rex.nvim",
+    name = "rex.nvim",
+    lazy = true,
+    opts = { poll_interval = 60 * 1000 },
+  },
   {
     "LazyVim/LazyVim",
     opts = {

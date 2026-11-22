@@ -140,6 +140,10 @@ local hl = {
 
 local color_keys = { "fg", "bg", "sp" }
 
+-- Background this instance last applied. Theme checks compare against it, not the cache file,
+-- because another Neovim may already have written the new palette there.
+local applied_bg
+
 -- Applies the colorscheme from the cached palette; called by colors/rex.lua.
 function M.load()
   vim.cmd("highlight clear")
@@ -149,6 +153,7 @@ function M.load()
   vim.g.colors_name = "rex"
 
   local palette = rex_palette.load()
+  applied_bg = palette.bg
   for group, slots in pairs(hl) do
     local spec = vim.deepcopy(slots)
     for _, key in ipairs(color_keys) do
@@ -164,8 +169,15 @@ function M.load()
   end
 end
 
+local refreshing = false
+
 -- Reads the palette slots the groups use from the terminal again, then reloads the colorscheme.
-function M.refresh()
+function M.refresh(opts)
+  opts = opts or {}
+  if refreshing then
+    return
+  end
+  refreshing = true
   local used = {}
   for _, spec in pairs(hl) do
     for _, key in ipairs(color_keys) do
@@ -174,10 +186,67 @@ function M.refresh()
       end
     end
   end
-  rex_palette.refresh(vim.tbl_keys(used), function()
+  rex_palette.refresh(vim.tbl_keys(used), function(ok, err)
+    refreshing = false
+    if not ok then
+      if not opts.silent then
+        vim.notify(err, vim.log.levels.WARN)
+      end
+      return
+    end
+    -- An automatic refresh must not switch back to rex if another scheme was picked meanwhile.
+    if opts.silent and vim.g.colors_name ~= "rex" then
+      return
+    end
     vim.cmd.colorscheme("rex")
-    vim.notify("Rex palette refreshed")
+    if not opts.silent then
+      vim.notify("Rex palette refreshed")
+    end
   end)
+end
+
+-- No DEC mode 2031 handler is needed: Neovim enables the mode and re-queries OSC 11 on
+-- light/dark switches, and those replies arrive here like any other.
+function M.on_term_response(seq)
+  if refreshing or vim.g.colors_name ~= "rex" then
+    return
+  end
+  local r, g, b = seq:match("^\027%]11;rgba?:(%x%x)%x*/(%x%x)%x*/(%x%x)")
+  if not r then
+    return
+  end
+  if ("#" .. r .. g .. b):lower() ~= (applied_bg or ""):lower() then
+    M.refresh({ silent = true })
+  end
+end
+
+function M.check_theme()
+  if refreshing or vim.g.colors_name ~= "rex" then
+    return
+  end
+  vim.api.nvim_ui_send("\027]11;?\027\\")
+end
+
+local defaults = {
+  -- How often to check for a Rex theme change, in milliseconds. 0 or false turns polling off.
+  poll_interval = 60 * 1000,
+}
+
+local poll_timer
+
+-- Runs twice: with defaults from plugin/rex.lua, then with lazy.nvim's opts.
+function M.setup(opts)
+  M.config = vim.tbl_extend("force", defaults, opts or {})
+  if poll_timer then
+    poll_timer:stop()
+    poll_timer:close()
+    poll_timer = nil
+  end
+  local interval = M.config.poll_interval
+  if interval and interval > 0 then
+    poll_timer = vim.uv.new_timer()
+    poll_timer:start(interval, interval, vim.schedule_wrap(M.check_theme))
+  end
 end
 
 return M

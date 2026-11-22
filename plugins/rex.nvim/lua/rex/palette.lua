@@ -54,7 +54,7 @@ function M.load()
   return palette
 end
 
--- Asks the terminal for `slots` plus fg/bg, saves the answers, then calls on_done.
+-- Asks the terminal for `slots` plus fg/bg, saves the answers, then calls on_done(ok, err).
 -- Keeps the cache when the terminal does not report its background: Rex only answers with the
 -- theme's colors for a pane the app is showing.
 function M.refresh(slots, on_done)
@@ -87,16 +87,17 @@ function M.refresh(slots, on_done)
   vim.defer_fn(function()
     vim.api.nvim_del_augroup_by_id(group)
     if not palette.bg then
-      vim.notify("Terminal did not report its colors; kept the cached palette", vim.log.levels.WARN)
+      on_done(false, "Terminal did not report its colors; kept the cached palette")
       return
     end
     local cache = {}
     for key, color in pairs(palette) do
       cache[tostring(key)] = color
     end
-    vim.fn.mkdir(vim.fn.fnamemodify(M.path, ":h"), "p")
-    vim.fn.writefile({ vim.json.encode(cache) }, M.path)
-    on_done()
+    on_done(pcall(function()
+      vim.fn.mkdir(vim.fn.fnamemodify(M.path, ":h"), "p")
+      vim.fn.writefile({ vim.json.encode(cache) }, M.path)
+    end))
   end, 500)
 end
 

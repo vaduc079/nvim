@@ -1,6 +1,6 @@
 -- Rex: colors come from the terminal palette, so they follow the Rex terminal theme.
 -- Groups name palette slots; rex.palette turns them into the exact colors Rex reported
--- (run :RexPalette after changing the Rex theme). Slots also go to ctermfg/ctermbg, so the scheme
+-- and re-reads them when the Rex theme changes. Slots also go to ctermfg/ctermbg, so the scheme
 -- still follows the terminal with termguicolors off.
 -- 0-15 are the theme's ANSI colors. 16-231 and 232-255 are Rex's generated palette: 16 is the
 -- background, 16 + 36r + 6g + b tints it toward red/green/blue, 232-255 ramp from background to
@@ -140,11 +140,20 @@ local hl = {
 
 local color_keys = { "fg", "bg", "sp" }
 
--- Background this instance last applied. Theme checks compare against it, not the cache file,
--- because another Neovim may already have written the new palette there.
-local applied_bg
+local slots = {}
+for _, spec in pairs(hl) do
+  for _, key in ipairs(color_keys) do
+    if type(spec[key]) == "number" and not vim.tbl_contains(slots, spec[key]) then
+      slots[#slots + 1] = spec[key]
+    end
+  end
+end
 
--- Applies the colorscheme from the cached palette; called by colors/rex.lua.
+-- Palette this instance applied. Reloads reuse it rather than the cache file, which another
+-- Neovim may have rewritten.
+local applied
+
+-- Applies the colorscheme; called by colors/rex.lua.
 function M.load()
   vim.cmd("highlight clear")
   if vim.fn.exists("syntax_on") == 1 then
@@ -152,14 +161,13 @@ function M.load()
   end
   vim.g.colors_name = "rex"
 
-  local palette = rex_palette.load()
-  applied_bg = palette.bg
-  for group, slots in pairs(hl) do
-    local spec = vim.deepcopy(slots)
+  applied = applied or rex_palette.load()
+  for group, spec_slots in pairs(hl) do
+    local spec = vim.deepcopy(spec_slots)
     for _, key in ipairs(color_keys) do
-      local slot = slots[key]
+      local slot = spec_slots[key]
       if slot ~= nil then
-        spec[key] = palette[slot] or rex_palette.fallback[slot]
+        spec[key] = applied[slot] or rex_palette.fallback[slot]
         if type(slot) == "number" and key ~= "sp" then
           spec["cterm" .. key] = slot
         end
@@ -169,67 +177,45 @@ function M.load()
   end
 end
 
-local refreshing = false
+local syncing = false
 
--- Reads the palette slots the groups use from the terminal again, then reloads the colorscheme.
-function M.refresh(opts)
+-- Reads the palette from the terminal and reapplies the colorscheme when it changed. Only the
+-- triggers in plugin/rex.lua call this, never a terminal reply, so the replies to its own queries
+-- cannot start another sync. An automatic sync does nothing while another colorscheme is active;
+-- a manual one (:RexPalette) always applies rex and reports the result.
+function M.sync(opts)
   opts = opts or {}
-  if refreshing then
+  if syncing or (not opts.manual and vim.g.colors_name ~= "rex") then
     return
   end
-  refreshing = true
-  local used = {}
-  for _, spec in pairs(hl) do
-    for _, key in ipairs(color_keys) do
-      if type(spec[key]) == "number" then
-        used[spec[key]] = true
-      end
-    end
-  end
-  rex_palette.refresh(vim.tbl_keys(used), function(ok, err)
-    refreshing = false
-    if not ok then
-      if not opts.silent then
-        vim.notify(err, vim.log.levels.WARN)
+  syncing = true
+  rex_palette.query(slots, function(palette)
+    syncing = false
+    -- No fg/bg when the app is not showing this session; Rex then answers OSC 4 with xterm's
+    -- defaults instead of the theme's.
+    if not (palette.fg and palette.bg) then
+      if opts.manual then
+        vim.notify("Terminal did not report its colors; kept the current palette", vim.log.levels.WARN)
       end
       return
     end
-    -- An automatic refresh must not switch back to rex if another scheme was picked meanwhile.
-    if opts.silent and vim.g.colors_name ~= "rex" then
+    local changed = not vim.deep_equal(palette, applied)
+    if not opts.manual and (not changed or vim.g.colors_name ~= "rex") then
       return
     end
+    applied = palette
     vim.cmd.colorscheme("rex")
-    if not opts.silent then
+    rex_palette.save(palette)
+    if opts.manual then
       vim.notify("Rex palette refreshed")
     end
   end)
 end
 
--- No DEC mode 2031 handler is needed: Neovim enables the mode and re-queries OSC 11 on
--- light/dark switches, and those replies arrive here like any other.
-function M.on_term_response(seq)
-  if refreshing or vim.g.colors_name ~= "rex" then
-    return
-  end
-  local r, g, b = seq:match("^\027%]11;rgba?:(%x%x)%x*/(%x%x)%x*/(%x%x)")
-  if not r then
-    return
-  end
-  if ("#" .. r .. g .. b):lower() ~= (applied_bg or ""):lower() then
-    M.refresh({ silent = true })
-  end
-end
-
-function M.check_theme()
-  if refreshing or vim.g.colors_name ~= "rex" then
-    return
-  end
-  vim.api.nvim_ui_send("\027]11;?\027\\")
-end
-
 local defaults = {
   -- How often to check for a Rex theme change, in milliseconds. 0 or false turns polling off.
-  poll_interval = 60 * 1000,
+  -- Rex sends no notification when the theme changes within the same light/dark mode.
+  poll_interval = 10 * 60 * 1000,
 }
 
 local poll_timer
@@ -245,7 +231,7 @@ function M.setup(opts)
   local interval = M.config.poll_interval
   if interval and interval > 0 then
     poll_timer = vim.uv.new_timer()
-    poll_timer:start(interval, interval, vim.schedule_wrap(M.check_theme))
+    poll_timer:start(interval, interval, vim.schedule_wrap(M.sync))
   end
 end
 

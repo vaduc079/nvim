@@ -78,7 +78,7 @@ return {
     dir = vim.fn.stdpath("config") .. "/plugins/rex.nvim",
     name = "rex.nvim",
     lazy = true,
-    opts = { poll_interval = 60 * 1000 },
+    opts = { poll_interval = 10 * 60 * 1000 },
   },
   {
     "LazyVim/LazyVim",

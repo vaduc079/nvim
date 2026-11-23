@@ -86,6 +86,10 @@ local function setup_keymaps()
   set_keymap("<C-j>", directions.j)
   set_keymap("<C-k>", directions.k)
   set_keymap("<C-l>", directions.l)
+  set_keymap("<C-Left>", directions.h)
+  set_keymap("<C-Down>", directions.j)
+  set_keymap("<C-Up>", directions.k)
+  set_keymap("<C-Right>", directions.l)
 end
 
 local function setup_keymaps_after_lazyvim()
